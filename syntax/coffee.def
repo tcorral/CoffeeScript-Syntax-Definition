@@ -1,0 +1,178 @@
+syntaxdef coffee {
+
+# whitespace
+/\s+/m : ;
+
+/(0x[0-9a-f][0-9a-f_]*l?)|(0b[0-1][0-1_]*l?)|([0-9][0-9_]*(\.[0-9][0-9_]*)?|\.[0-9][0-9_]+)(e(\+|-)?[0-9][0-9_]*)?(f|l|d)?/i : {
+	region {
+		type=numeric;
+	}
+}
+
+# arrays
+/\[(\d*)(\.{2,3})(\d*)\]/ : {
+    region ${1}{
+        type=numeric;
+    }
+	region ${2}{
+        type=keyword;
+    }
+	region ${3}{
+        type=numeric;
+    }
+}
+
+/###([\s\S]*?)###/s : {
+	coffeedoc(${1});
+    region {
+		type=comment;
+        index=prose;
+        findlinks=true;
+    }
+}
+
+# Built-in constants
+/\b(false|true|yes|no|o(n|ff)|undefined|null|NaN|Infinity)\b/ : {
+    region {
+        type=symbol;
+    }
+}
+
+# Check Undefined question mark
+/\?/ : {
+	region {
+		type=keyword;
+	}
+}
+
+# Generic keywords
+/\b(and|b(reak|y)|c(atch|on(tinue|structor))|d(elete|o)|else|f(or|inally)|return|throw|i(f|n|s(|nt))|loop|not|o(f|r)|s(uper|witch)|t(hen|ypeof|ry)|un(less|til)|wh(ile|e(n|ere)))\b/ : {
+	region {
+		type=keyword;
+	}
+}
+
+# Keywords which are always followed by a class name
+/\b(class|extends|new|instanceof)\b/ : {
+    region {
+        type=slashy;
+    }
+}
+
+# Reserved words
+/\b(__(hasProp|extends|slice|bind|indexOf)|c(ase|onst)|default|e(num|xport)|function|import|let|native|v(ar|oid)|with)\b/ : {
+    region {
+        type=escape;
+    }
+}
+
+
+# Built-in globals provided in most contexts
+/\b(Array|Boolean|console|clearInterval|clearTimeout|Date|decodeURI(|Component)|e(val|scape|ncodeURI(|Component))|Function|is(Finite|NaN)|Math|Number|Object|parse(Float|Int)|RegExp|set(Interval|Timeout)|String|unescape)\b/ : {
+    region {
+        type=todo;
+    }
+}
+
+# Built-in globals provided in browser context
+/\b(window|document|navigator|location|history|screen|alert|prompt|confirm)\b/ : {
+    region {
+        type=todo;
+    }
+}
+
+# Built-in globals provided in Node.js context
+/\b(process|GLOBAL|require|exports)\b/ : {
+    region {
+        type=todo;
+    }
+}
+
+# Member accessors
+/(@[_$a-zA-Z][$\w]+|\bthis)\b/ : {
+    region {
+        type=preprocessor;
+    }
+}
+
+# Function definitions. Matches an optional argument list followed by a function arrow (normal or fat)
+/(?:[\(][\w\s\.\,\$]*[\)][\s])?[-=]>/ : {
+    region {
+        type=annotation;
+    }
+}
+
+# class names
+#/[@$:.\w]+/ : {
+#    region {
+#        type=elem_id;
+#    }
+#}
+
+# Generic identifiers
+/[_$a-zA-Z][$\w]+\b/ : {
+    region {
+        type=pseudo_class;
+    }
+}
+
+# single quote string literal
+/'/ : {
+    context {
+            /\\./: ;
+            /$/m : exit;
+            "'" : exit;
+        }
+        region ${ALL} {
+               type=string;
+        }
+    }
+
+# Embedded Javascript
+/`[\s\S]*?`/ : {
+    region {
+        type=css_attrib_key;
+    }
+}
+
+
+# Regular Expressions
+# Multiline Regex
+/\/\/\/([\s\S]*?)\/\/\//s : {
+	coffeedoc(${1});
+    region {
+		type=regex;
+        index=prose;
+        findlinks=true;
+    }
+}
+
+# Comments
+# Single Comment
+/#.*?$/m : {
+	region {
+		type=comment;
+		index=prose;
+		findlinks=true;
+	}
+}
+
+# multiline string literals
+/"([\s\S]*?)"/ : {
+    coffeedoc(${1});
+	region ${ALL} {
+		type=string;
+	}
+}
+
+
+context coffeedoc {
+
+  /(\B@[a-zA-Z0-9-_.]+)\s*([^@\*]*)/ : {
+	 region ${1} {
+		type=commentmeta;
+	 }
+  }
+}
+
+}
